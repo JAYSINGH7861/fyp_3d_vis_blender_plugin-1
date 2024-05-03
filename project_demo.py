@@ -12,7 +12,7 @@ scene = context.scene
 # BE CAREFUL - ANY WRONG INPUT WILL RAISE AN ERROR.
 
 
-excel_file_path = r"C:\Users\anujs\OneDrive\Desktop\Book3.xlsx"
+excel_file_path = r"E:\project_24\fyp_3d_vis_blender_plugin\sample.xlsx"
 data_column = 5
 month_column = 2
 currency_symbol = "$"
