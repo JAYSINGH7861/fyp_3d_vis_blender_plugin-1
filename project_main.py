@@ -15,18 +15,32 @@ class OpenFilebrowser(bpy.types.Operator):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
-class Addaxis(bpy.types.Operator):
-    bl_idname = "mesh.add_axis"
-    bl_label = "Addaxis"
+class AddCustomObject(bpy.types.Operator):
+    bl_idname = "mesh.add_custom_object"
+    bl_label = "Add Custom Object"
     bl_options = {'REGISTER', 'UNDO'}
     
-    subdivisions_x: bpy.props.IntProperty(name="X Subdivisions", default=2, min=1, max=6)
-    subdivisions_y: bpy.props.IntProperty(name="Y Subdivisions", default=2, min=1, max=6)
+class DataColumnItem(bpy.types.PropertyGroup):
+    """Class to store properties for each data column."""
+    name: bpy.props.StringProperty(name="Name")
+   
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
 
-    def execute(self, context):
-        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=self.subdivisions_x, subdivisions_y=self.subdivisions_y)
+        obj = context.active_object
+        if obj is not None and obj.type == 'MESH':
+            row = layout.row()
+            row.label(text="Drag object along axis:")
+            row = layout.row()
+            row.prop(obj, "location", index=0, text="X")
+            row.prop(obj, "location", index=1, text="Y")
+            row.prop(obj, "location", index=2, text="Z")
+            
+        column = context.scene.data_columns[context.scene.active_column_index].name
+        context.scene.y_axis_column = column
         return {'FINISHED'}
-
+    
     def invoke(self, context, event):
         wm = context.window_manager
         return wm.invoke_props_dialog(self)
@@ -34,10 +48,10 @@ class Addaxis(bpy.types.Operator):
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        row.prop(self, "subdivisions_x")
+        row.prop(self, "axis_x")
         
         row = layout.row()
-        row.prop(self, "subdivisions_y")
+        row.prop(self, "axis_y")
 
 class AddLineGraph(bpy.types.Operator):
     bl_idname = "mesh.add_line_graph"
@@ -122,7 +136,10 @@ class VIEW3D_PT_my_custom_panel(bpy.types.Panel):
         row.label(text=context.scene.my_file_path)
 
         row = layout.row()
-        row.operator("mesh.add_axis", text="Add axis")
+        row.operator("mesh.add_custom_object", text="Add Custom Object")
+        layout.prop(scene, "x_axis_column", text="X Axis")
+        layout.prop(scene, "y_axis_column", text="Y Axis")
+
 
         row = layout.row()
         row.label(text="Graphs:")
@@ -138,10 +155,16 @@ class VIEW3D_PT_my_custom_panel(bpy.types.Panel):
         row = layout.row()
         row.label(text="Color:")
         row.operator("object.set_object_color", text="Set Object Color")
-
+        
 def register():
-    bpy.utils.register_class(OpenFilebrowser)
-    bpy.utils.register_class(Addaxis)
+    bpy.utils.register_class(CustomPanel)
+    
+def unregister_columns():
+    bpy.utils.unregister_class(DataColumnItem)
+    del bpy.types.Scene.data_columns
+    del bpy.types.Scene.active_column_index
+
+
     bpy.utils.register_class(AddLineGraph)
     bpy.utils.register_class(AddBarChart)
     bpy.utils.register_class(AddPieChart)
@@ -158,7 +181,9 @@ def register():
 def unregister():
     del bpy.types.Scene.my_file_path
     bpy.utils.unregister_class(OpenFilebrowser)
-    bpy.utils.unregister_class(Addaxis)
+    bpy.utils.unregister_class(AddCustomObject)
+    del bpy.types.Scene.x_axis_column
+    del bpy.types.Scene.y_axis_column
     bpy.utils.unregister_class(AddLineGraph)
     bpy.utils.unregister_class(AddBarChart)
     bpy.utils.unregister_class(AddPieChart)
